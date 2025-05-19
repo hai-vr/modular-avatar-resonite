@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine;
 
 using p = nadena.dev.ndmf.proto;
@@ -79,7 +80,7 @@ namespace nadena.dev.ndmf.platform.resonite
 
             importerReference = emissionTex;
             
-            if (emissionMask != null && emissionTex != null)
+            if (emissionTex != null && (emissionMask != null || GraphicsFormatUtility.HasAlphaChannel(emissionTex.graphicsFormat)))
             {
                 var newTex = BakeEmissionMask(mat, (Texture2D) emissionTex, emissionMask);
                 if (newTex != null)
@@ -199,11 +200,6 @@ namespace nadena.dev.ndmf.platform.resonite
         
         private Texture2D BakeEmissionMask(Material material, Texture2D emissionMap, Texture2D? emissionMask)
         {
-            if (emissionMask == null)
-            {
-                return null;
-            }
-            
             var width = emissionMap.width;
             var height = emissionMap.height;
             
