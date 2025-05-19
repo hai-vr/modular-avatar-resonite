@@ -176,8 +176,17 @@ namespace nadena.dev.ndmf.platform.resonite
                 };
             }
             
+            var emissionColor = material.GetColor("_EmissionColor");
+            var emissionBlend = material.HasFloat("_EmissionBlend") ? material.GetFloat("_EmissionBlend") : 1f;
+            var emissionColorMul = emissionColor.a * emissionBlend;
+            var correctedEmissionColor = new Color(
+                emissionColor.r * emissionColorMul,
+                emissionColor.g * emissionColorMul,
+                emissionColor.b * emissionColorMul,
+                1);
+            
             protoMat.MainColor = material.color.ToRPC();
-            protoMat.EmissionColor = material.GetColor("_EmissionColor").ToRPC();
+            protoMat.EmissionColor = correctedEmissionColor.ToRPC();
             protoMat.MatcapColor = material.GetColor("_MatCapColor").ToRPC();
             protoMat.AlphaClip = material.GetFloat("_Cutoff");
             
