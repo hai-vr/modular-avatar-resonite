@@ -1,4 +1,5 @@
-﻿using FrooxEngine;
+﻿using System.Collections;
+using FrooxEngine;
 using FrooxEngine.CommonAvatar;
 using nadena.dev.resonity.remote.puppeteer.rpc;
 
@@ -27,6 +28,10 @@ public class AvatarExpressionFilter(TranslateContext ctx)
             if (bs != null) blendshapeIndices[bs] = i;
         }
         
+        var isProbablyUnifiedExpressions = ItCouldBeUnifiedExpressions(blendshapeIndices);
+        var isProbablyARKit = ItCouldBeARKit(blendshapeIndices);
+        if (!isProbablyUnifiedExpressions && !isProbablyARKit) return;
+        
         var linearDriver = slot.GetComponentInChildren<EyeLinearDriver>();
         if (linearDriver.Eyes.Count == 0)
         {
@@ -44,13 +49,17 @@ public class AvatarExpressionFilter(TranslateContext ctx)
             TryGetFieldAndThen(UnifiedExpressionsBasics.EyeWide, isLeftSide, field => eye.WidenTarget.ForceLink(field));
             TryGetFieldAndThen(UnifiedExpressionsBasics.EyeSquint, isLeftSide, field => eye.SqueezeTarget.ForceLink(field)); // This is not a 1:1
             TryGetFieldAndThen(UnifiedExpressionsBasics.BrowOuterUp, isLeftSide, field => eye.FrownTarget.ForceLink(field));
+            TryGetFieldAndThen(UnifiedExpressionsBasics.EyeLookUp, isLeftSide, field => eye.LookUp.ForceLink(field));
+            TryGetFieldAndThen(UnifiedExpressionsBasics.EyeLookDown, isLeftSide, field => eye.LookDown.ForceLink(field));
+            // TODO: LookLeft need to be bound to EyeLookOutLeft and EyeLookInRight 
+            // TODO: LookRight need to be bound to EyeLookInLeft and EyeLookOutRight
         }
         
         void TryGetFieldAndThen(ConventionElement element, bool isLeftSide, Action<Sync<float>> callbackFn)
         {
             var shapeName = isLeftSide ? element.Left : element.Right;
             
-            if (shapeName is nameof(UnifiedExpressionsBasics.Ignore) or nameof(UnifiedExpressionsBasics.Todo)) return;
+            if (shapeName is nameof(Ignore) or nameof(Todo) or nameof(Unavailable)) return;
 
             if (!blendshapeIndices.TryGetValue(shapeName, out var index)) return;
             if (targetMesh.BlendShapeWeights.Count <= index) return;
@@ -78,130 +87,20 @@ public class AvatarExpressionFilter(TranslateContext ctx)
             if (bs != null) blendshapeIndices[bs] = i;
         }
 
+        var isProbablyUnifiedExpressions = ItCouldBeUnifiedExpressions(blendshapeIndices);
+        var isProbablyARKit = ItCouldBeARKit(blendshapeIndices);
+        if (!isProbablyUnifiedExpressions && isProbablyARKit) return;
+        
+        var associations = isProbablyUnifiedExpressions ? BuildUnifiedExpressionsBinding() : BuildArKitBinding();
+
         var prevDriver = slot.GetComponentInChildren<AvatarExpressionDriver>();
         prevDriver?.Destroy();
         
-        // TODO: Check which naming convention this avatar uses.
         var driver = targetMesh.Slot.AttachComponent<AvatarExpressionDriver>();
+
+        foreach (var association in associations)
         {
-            // Eyebrow Drivers
-            if (TryCreateExpressionDriverFor(AvatarExpression.FrownLeft, UnifiedExpressionsBasics.BrowDown.Left))
-            {
-                TryCreateExpressionDriverFor(AvatarExpression.FrownLeft, UnifiedExpressionsBasics.BrowInnerUp.Left);
-            }
-            if (TryCreateExpressionDriverFor(AvatarExpression.FrownRight, UnifiedExpressionsBasics.BrowDown.Right))
-            {
-                TryCreateExpressionDriverFor(AvatarExpression.FrownRight, UnifiedExpressionsBasics.BrowInnerUp.Right);
-            }
-        }
-        {
-            // Mouth Drivers
-            TryCreateExpressionDriverFor(AvatarExpression.Smile, UnifiedExpressionsBasics.Ignore);
-            TryCreateExpressionDriverFor(AvatarExpression.SmileLeft, UnifiedExpressionsBasics.MouthSmile.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.SmileRight, UnifiedExpressionsBasics.MouthSmile.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.SmirkLeft, UnifiedExpressionsBasics.Mouth.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.SmirkRight, UnifiedExpressionsBasics.Mouth.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.Frown, UnifiedExpressionsBasics.Ignore);
-            TryCreateExpressionDriverFor(AvatarExpression.FrownLeft, UnifiedExpressionsBasics.MouthFrown.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.FrownRight, UnifiedExpressionsBasics.MouthFrown.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.MouthDimple, UnifiedExpressionsBasics.Ignore);
-            TryCreateExpressionDriverFor(AvatarExpression.MouthDimpleLeft, UnifiedExpressionsBasics.MouthDimple.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.MouthDimpleRight, UnifiedExpressionsBasics.MouthDimple.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueOut, UnifiedExpressionsBasics.TongueOut.Center);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueRaise, UnifiedExpressionsBasics.Ignore);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueExtend, UnifiedExpressionsBasics.Ignore);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueLeft, UnifiedExpressionsBasics.TongueLeft.Center);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueRight, UnifiedExpressionsBasics.TongueRight.Center);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueDown, UnifiedExpressionsBasics.TongueDown.Center);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueUp, UnifiedExpressionsBasics.TongueUp.Center);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueRoll, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueHorizontal, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueVertical, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueUpLeft, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueUpRight, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueDownLeft, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.TongueDownRight, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.SmileClosed, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.SmileClosedLeft, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.SmileClosedRight, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.Grin, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.GrinLeft, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.GrinRight, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.Angry, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.CheekPuffLeft, UnifiedExpressionsBasics.CheekPuff.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.CheekPuffRight, UnifiedExpressionsBasics.CheekPuff.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.CheekPuff, UnifiedExpressionsBasics.Ignore);
-            TryCreateExpressionDriverFor(AvatarExpression.CheekSuckLeft, UnifiedExpressionsBasics.CheekSuck.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.CheekSuckRight, UnifiedExpressionsBasics.CheekSuck.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.CheekSuck, UnifiedExpressionsBasics.Ignore);
-            TryCreateExpressionDriverFor(AvatarExpression.CheekRaiseLeft, UnifiedExpressionsBasics.CheekSquint.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.CheekRaiseRight, UnifiedExpressionsBasics.CheekSquint.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.CheekRaise, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipRaiseUpperLeft, UnifiedExpressionsBasics.MouthRaiserUpper.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.LipRaiseUpperRight, UnifiedExpressionsBasics.MouthRaiserUpper.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.LipRaiseLowerLeft, UnifiedExpressionsBasics.MouthRaiserLower.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.LipRaiseLowerRight, UnifiedExpressionsBasics.MouthRaiserLower.Right);
-            {
-                TryCreateExpressionDriverFor(AvatarExpression.LipRaiseUpper, UnifiedExpressionsBasics.MouthUpper.Left);
-                TryCreateExpressionDriverFor(AvatarExpression.LipRaiseUpper, UnifiedExpressionsBasics.MouthUpper.Right);
-                TryCreateExpressionDriverFor(AvatarExpression.LipRaiseLower, UnifiedExpressionsBasics.MouthLower.Left);
-                TryCreateExpressionDriverFor(AvatarExpression.LipRaiseLower, UnifiedExpressionsBasics.MouthLower.Right);
-            }
-            TryCreateExpressionDriverFor(AvatarExpression.LipMoveLeftUpper, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipMoveRightUpper, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipMoveLeftLower, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipMoveRightLower, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipMoveHorizontalUpper, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipMoveHorizontalLower, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipTopLeftOverturn, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipTopRightOverturn, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipTopOverturn, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipBottomLeftOverturn, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipBottomRightOverturn, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipBottomOverturn, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipOverlayUpper, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipOverlayUpperLeft, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipOverlayUpperRight, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipUnderlayUpper, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipUnderlayUpperLeft, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipUnderlayUpperRight, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipOverlayLower, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipOverlayLowerLeft, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipOverlayLowerRight, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipUnderlayLower, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipUnderlayLowerLeft, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipUnderlayLowerRight, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.LipStretch, UnifiedExpressionsBasics.Ignore);
-            TryCreateExpressionDriverFor(AvatarExpression.LipStretchLeft, UnifiedExpressionsBasics.MouthStretch.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.LipStretchRight, UnifiedExpressionsBasics.MouthStretch.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.LipTighten, UnifiedExpressionsBasics.Ignore);
-            TryCreateExpressionDriverFor(AvatarExpression.LipTightenLeft, UnifiedExpressionsBasics.MouthTightener.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.LipTightenRight, UnifiedExpressionsBasics.MouthTightener.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.LipsPress, UnifiedExpressionsBasics.Ignore);
-            TryCreateExpressionDriverFor(AvatarExpression.LipsPressLeft, UnifiedExpressionsBasics.MouthPress.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.LipsPressRight, UnifiedExpressionsBasics.MouthPress.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.JawLeft, UnifiedExpressionsBasics.Jaw.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.JawRight, UnifiedExpressionsBasics.Jaw.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.JawHorizontal, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.JawForward, UnifiedExpressionsBasics.JawForward.Center);
-            {
-                // TryCreateExpressionDriverFor(AvatarExpression.JawDown, UnifiedExpressionsBasics.MouthClosed.Center); // TODO: This is incorrect
-                TryCreateExpressionDriverFor(AvatarExpression.JawDown, UnifiedExpressionsBasics.Todo);
-            }
-            TryCreateExpressionDriverFor(AvatarExpression.JawOpen, UnifiedExpressionsBasics.JawOpen.Center);
-            TryCreateExpressionDriverFor(AvatarExpression.Pout, UnifiedExpressionsBasics.Ignore);
-            {
-                TryCreateExpressionDriverFor(AvatarExpression.PoutLeft, UnifiedExpressionsBasics.LipFunnelUpper.Left);
-                TryCreateExpressionDriverFor(AvatarExpression.PoutLeft, UnifiedExpressionsBasics.LipFunnelLower.Left);
-                TryCreateExpressionDriverFor(AvatarExpression.PoutRight, UnifiedExpressionsBasics.LipFunnelUpper.Right);
-                TryCreateExpressionDriverFor(AvatarExpression.PoutRight, UnifiedExpressionsBasics.LipFunnelLower.Right);
-            }
-            TryCreateExpressionDriverFor(AvatarExpression.NoseWrinkle, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.NoseWrinkleLeft, UnifiedExpressionsBasics.NoseSneer.Left);
-            TryCreateExpressionDriverFor(AvatarExpression.NoseWrinkleRight, UnifiedExpressionsBasics.NoseSneer.Right);
-            TryCreateExpressionDriverFor(AvatarExpression.ChinRaise, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.ChinRaiseBottom, UnifiedExpressionsBasics.Todo);
-            TryCreateExpressionDriverFor(AvatarExpression.ChinRaiseTop, UnifiedExpressionsBasics.Todo);
+            TryCreateExpressionDriverFor(association.Expression, association.BlendShape);
         }
 
         bool TryCreateExpressionDriverFor(AvatarExpression expression, string shapeName)
@@ -211,7 +110,7 @@ public class AvatarExpressionFilter(TranslateContext ctx)
 
         bool TryCreateExpressionDriverAndThen(AvatarExpression expression, string shapeName, Action<AvatarExpressionDriver.ExpressionDriver> callbackFn)
         {
-            if (shapeName is nameof(UnifiedExpressionsBasics.Ignore) or nameof(UnifiedExpressionsBasics.Todo)) return false;
+            if (shapeName is nameof(Ignore) or nameof(Todo) or nameof(Unavailable)) return false;
             
             if (!blendshapeIndices.TryGetValue(shapeName, out var index)) return false;
             if (targetMesh.BlendShapeWeights.Count <= index) return false;
@@ -229,16 +128,157 @@ public class AvatarExpressionFilter(TranslateContext ctx)
             return true;
         }
     }
-    
+
+    private List<Binding> BuildUnifiedExpressionsBinding()
+    {
+        return new List<Binding>
+        {
+            // Eyebrow Drivers
+            new(AvatarExpression.FrownLeft, UnifiedExpressionsBasics.BrowDown.Left),
+            new(AvatarExpression.FrownLeft, UnifiedExpressionsBasics.BrowInnerUp.Left),
+            new(AvatarExpression.FrownRight, UnifiedExpressionsBasics.BrowDown.Right),
+            new(AvatarExpression.FrownRight, UnifiedExpressionsBasics.BrowInnerUp.Right),
+
+            // Mouth Drivers
+            new(AvatarExpression.Smile, Ignore),
+            new(AvatarExpression.SmileLeft, UnifiedExpressionsBasics.MouthSmile.Left),
+            new(AvatarExpression.SmileRight, UnifiedExpressionsBasics.MouthSmile.Right),
+            new(AvatarExpression.SmirkLeft, UnifiedExpressionsBasics.Mouth.Left),
+            new(AvatarExpression.SmirkRight, UnifiedExpressionsBasics.Mouth.Right),
+            new(AvatarExpression.Frown, Ignore),
+            new(AvatarExpression.FrownLeft, UnifiedExpressionsBasics.MouthFrown.Left),
+            new(AvatarExpression.FrownRight, UnifiedExpressionsBasics.MouthFrown.Right),
+            new(AvatarExpression.MouthDimple, Ignore),
+            new(AvatarExpression.MouthDimpleLeft, UnifiedExpressionsBasics.MouthDimple.Left),
+            new(AvatarExpression.MouthDimpleRight, UnifiedExpressionsBasics.MouthDimple.Right),
+            new(AvatarExpression.TongueOut, UnifiedExpressionsBasics.TongueOut.Center),
+            new(AvatarExpression.TongueRaise, Ignore),
+            new(AvatarExpression.TongueExtend, Ignore),
+            new(AvatarExpression.TongueLeft, UnifiedExpressionsBasics.TongueLeft.Center),
+            new(AvatarExpression.TongueRight, UnifiedExpressionsBasics.TongueRight.Center),
+            new(AvatarExpression.TongueDown, UnifiedExpressionsBasics.TongueDown.Center),
+            new(AvatarExpression.TongueUp, UnifiedExpressionsBasics.TongueUp.Center),
+
+            new(AvatarExpression.TongueRoll, Unavailable),
+            new(AvatarExpression.TongueHorizontal, Unavailable),
+            new(AvatarExpression.TongueVertical, Unavailable),
+            new(AvatarExpression.TongueUpLeft, Unavailable),
+            new(AvatarExpression.TongueUpRight, Unavailable),
+            new(AvatarExpression.TongueDownLeft, Unavailable),
+            new(AvatarExpression.TongueDownRight, Unavailable),
+
+            new(AvatarExpression.SmileClosed, Todo), // TODO: What is this?
+            new(AvatarExpression.SmileClosedLeft, Todo), // TODO: What is this?
+            new(AvatarExpression.SmileClosedRight, Todo), // TODO: What is this?
+            new(AvatarExpression.Grin, Ignore),
+            new(AvatarExpression.GrinLeft, UnifiedExpressionsBasics.LipPucker.Left),
+            new(AvatarExpression.GrinRight, UnifiedExpressionsBasics.LipPucker.Right),
+            new(AvatarExpression.Angry, Todo),
+            new(AvatarExpression.CheekPuffLeft, UnifiedExpressionsBasics.CheekPuff.Left),
+            new(AvatarExpression.CheekPuffRight, UnifiedExpressionsBasics.CheekPuff.Right),
+            new(AvatarExpression.CheekPuff, Ignore),
+            new(AvatarExpression.CheekSuckLeft, UnifiedExpressionsBasics.CheekSuck.Left),
+            new(AvatarExpression.CheekSuckRight, UnifiedExpressionsBasics.CheekSuck.Right),
+            new(AvatarExpression.CheekSuck, Ignore),
+            new(AvatarExpression.CheekRaiseLeft, UnifiedExpressionsBasics.CheekSquint.Left),
+            new(AvatarExpression.CheekRaiseRight, UnifiedExpressionsBasics.CheekSquint.Right),
+            new(AvatarExpression.CheekRaise, Ignore),
+            new(AvatarExpression.LipRaiseUpperLeft, UnifiedExpressionsBasics.MouthRaiserUpper.Left),
+            new(AvatarExpression.LipRaiseUpperRight, UnifiedExpressionsBasics.MouthRaiserUpper.Right),
+            new(AvatarExpression.LipRaiseLowerLeft, UnifiedExpressionsBasics.MouthRaiserLower.Left),
+            new(AvatarExpression.LipRaiseLowerRight, UnifiedExpressionsBasics.MouthRaiserLower.Right),
+
+            new(AvatarExpression.LipRaiseUpper, UnifiedExpressionsBasics.MouthUpper.Left),
+            new(AvatarExpression.LipRaiseUpper, UnifiedExpressionsBasics.MouthUpper.Right),
+            new(AvatarExpression.LipRaiseLower, UnifiedExpressionsBasics.MouthLower.Left),
+            new(AvatarExpression.LipRaiseLower, UnifiedExpressionsBasics.MouthLower.Right),
+
+            new(AvatarExpression.LipMoveLeftUpper, Todo),
+            new(AvatarExpression.LipMoveRightUpper, Todo),
+            new(AvatarExpression.LipMoveLeftLower, Todo),
+            new(AvatarExpression.LipMoveRightLower, Todo),
+            new(AvatarExpression.LipMoveHorizontalUpper, Todo),
+            new(AvatarExpression.LipMoveHorizontalLower, Todo),
+            new(AvatarExpression.LipTopLeftOverturn, Todo),
+            new(AvatarExpression.LipTopRightOverturn, Todo),
+            new(AvatarExpression.LipTopOverturn, Todo),
+            new(AvatarExpression.LipBottomLeftOverturn, Todo),
+            new(AvatarExpression.LipBottomRightOverturn, Todo),
+            new(AvatarExpression.LipBottomOverturn, Todo),
+            new(AvatarExpression.LipOverlayUpper, Todo),
+            new(AvatarExpression.LipOverlayUpperLeft, Todo),
+            new(AvatarExpression.LipOverlayUpperRight, Todo),
+            new(AvatarExpression.LipUnderlayUpper, Todo),
+            new(AvatarExpression.LipUnderlayUpperLeft, Todo),
+            new(AvatarExpression.LipUnderlayUpperRight, Todo),
+            new(AvatarExpression.LipOverlayLower, Todo),
+            new(AvatarExpression.LipOverlayLowerLeft, Todo),
+            new(AvatarExpression.LipOverlayLowerRight, Todo),
+            new(AvatarExpression.LipUnderlayLower, Todo),
+            new(AvatarExpression.LipUnderlayLowerLeft, Todo),
+            new(AvatarExpression.LipUnderlayLowerRight, Todo),
+            new(AvatarExpression.LipStretch, Ignore),
+            new(AvatarExpression.LipStretchLeft, UnifiedExpressionsBasics.MouthStretch.Left),
+            new(AvatarExpression.LipStretchRight, UnifiedExpressionsBasics.MouthStretch.Right),
+            new(AvatarExpression.LipTighten, Ignore),
+            new(AvatarExpression.LipTightenLeft, UnifiedExpressionsBasics.MouthTightener.Left),
+            new(AvatarExpression.LipTightenRight, UnifiedExpressionsBasics.MouthTightener.Right),
+            new(AvatarExpression.LipsPress, Ignore),
+            new(AvatarExpression.LipsPressLeft, UnifiedExpressionsBasics.MouthPress.Left),
+            new(AvatarExpression.LipsPressRight, UnifiedExpressionsBasics.MouthPress.Right),
+            new(AvatarExpression.JawLeft, UnifiedExpressionsBasics.Jaw.Left),
+            new(AvatarExpression.JawRight, UnifiedExpressionsBasics.Jaw.Right),
+            new(AvatarExpression.JawHorizontal, Todo),
+            new(AvatarExpression.JawForward, UnifiedExpressionsBasics.JawForward.Center),
+
+            // list.Add(new BS(AvatarExpression.JawDown, UnifiedExpressionsBasics.MouthClosed.Center); // TODO: This is incorrect, it may be a compound blendshape)
+            new(AvatarExpression.JawDown, Todo),
+
+            new(AvatarExpression.JawOpen, UnifiedExpressionsBasics.JawOpen.Center),
+            new(AvatarExpression.Pout, Ignore),
+
+            new(AvatarExpression.PoutLeft, UnifiedExpressionsBasics.LipFunnelUpper.Left),
+            new(AvatarExpression.PoutLeft, UnifiedExpressionsBasics.LipFunnelLower.Left),
+            new(AvatarExpression.PoutRight, UnifiedExpressionsBasics.LipFunnelUpper.Right),
+            new(AvatarExpression.PoutRight, UnifiedExpressionsBasics.LipFunnelLower.Right),
+
+            new(AvatarExpression.NoseWrinkle, Todo),
+            new(AvatarExpression.NoseWrinkleLeft, UnifiedExpressionsBasics.NoseSneer.Left),
+            new(AvatarExpression.NoseWrinkleRight, UnifiedExpressionsBasics.NoseSneer.Right),
+            new(AvatarExpression.ChinRaise, Todo),
+            new(AvatarExpression.ChinRaiseBottom, Todo),
+            new(AvatarExpression.ChinRaiseTop, Todo),
+        };
+    }
+
+    private List<Binding> BuildArKitBinding()
+    {
+        // TODO
+        return new List<Binding>();
+    }
+
+    private static bool ItCouldBeARKit(Dictionary<string, int> blendshapeIndices)
+    {
+        return blendshapeIndices.Select(pair => pair.Key.ToLowerInvariant()).Any(s => s == "mouthShrugLower".ToLowerInvariant());
+    }
+
+    private static bool ItCouldBeUnifiedExpressions(Dictionary<string, int> blendshapeIndices)
+    {
+        return blendshapeIndices.Select(pair => pair.Key.ToLowerInvariant()).Any(s => s == "MouthRaiserLower".ToLowerInvariant() || s == "MouthRaiserLowerLef".ToLowerInvariant());
+    }
+
+    private readonly struct Binding(AvatarExpression expression, string blendShape)
+    {
+        public AvatarExpression Expression { get; } = expression;
+        public string BlendShape { get; } = blendShape;
+    }
+
     // The following class is based on the Unified Expressions naming convention:
     // - https://docs.vrcft.io/docs/tutorial-avatars/tutorial-avatars-extras/unified-blendshapes
     //
     // Some metadata may be incorrect, refer to the source on that link.
     internal static class UnifiedExpressionsBasics
     {
-        public static readonly string Ignore = nameof(Ignore);
-        public static readonly string Todo = nameof(Todo);
-        
         public static readonly ConventionElement EyeLookUp = new(nameof(EyeLookUp), ConventionElementKind.CenteredAndSided);
         public static readonly ConventionElement EyeLookDown = new(nameof(EyeLookDown), ConventionElementKind.CenteredAndSided);
         public static readonly ConventionElement EyeLookIn = new(nameof(EyeLookIn), ConventionElementKind.CenteredAndSided);
@@ -298,4 +338,8 @@ public class AvatarExpressionFilter(TranslateContext ctx)
         Centered,
         Sided,
     }
+
+    public static readonly string Ignore = nameof(Ignore);
+    public static readonly string Todo = nameof(Todo);
+    public static readonly string Unavailable = nameof(Unavailable);
 }
