@@ -101,17 +101,21 @@ public class AvatarExpressionFilter(TranslateContext ctx)
         
         var driver = targetMesh.Slot.AttachComponent<AvatarExpressionDriver>();
 
+        var maker = new DriverMaker(blendshapeIndices, targetMesh, driver);
         foreach (var association in associations)
         {
-            TryCreateExpressionDriverFor(association.Expression, association.BlendShape);
+            maker.TryCreateExpressionDriverFor(association.Expression, association.BlendShape);
         }
+    }
 
-        bool TryCreateExpressionDriverFor(AvatarExpression expression, string shapeName)
+    private class DriverMaker(Dictionary<string, int> blendshapeIndices, SkinnedMeshRenderer targetMesh, AvatarExpressionDriver driver)
+    {
+        internal bool TryCreateExpressionDriverFor(AvatarExpression expression, string shapeName)
         {
             return TryCreateExpressionDriverAndThen(expression, shapeName, _ => { });
         }
 
-        bool TryCreateExpressionDriverAndThen(AvatarExpression expression, string shapeName, Action<AvatarExpressionDriver.ExpressionDriver> callbackFn)
+        private bool TryCreateExpressionDriverAndThen(AvatarExpression expression, string shapeName, Action<AvatarExpressionDriver.ExpressionDriver> callbackFn)
         {
             if (shapeName is nameof(Ignore) or nameof(Todo) or nameof(Unavailable)) return false;
             
