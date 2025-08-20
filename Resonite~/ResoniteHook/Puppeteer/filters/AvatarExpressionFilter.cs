@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using FrooxEngine;
+﻿using FrooxEngine;
 using FrooxEngine.CommonAvatar;
 using nadena.dev.resonity.remote.puppeteer.rpc;
 
@@ -10,6 +9,10 @@ namespace nadena.dev.resonity.remote.puppeteer.filters;
 
 public class AvatarExpressionFilter(TranslateContext ctx)
 {
+    public static readonly string Ignore = nameof(Ignore);
+    public static readonly string Todo = nameof(Todo);
+    public static readonly string Unavailable = nameof(Unavailable);
+    
     public async Task ApplyEyeLinearDriver(Slot slot, P.AvatarDescriptor spec)
     {
         var vc = spec.VisemeConfig;
@@ -45,12 +48,12 @@ public class AvatarExpressionFilter(TranslateContext ctx)
         foreach (var eye in linearDriver.Eyes)
         {
             var isLeftSide = eye.Side.Value == EyeSide.Left;
-            TryGetFieldAndThen(UnifiedExpressionsBasics.EyeClosed, isLeftSide, field => eye.OpenCloseTarget.ForceLink(field));
-            TryGetFieldAndThen(UnifiedExpressionsBasics.EyeWide, isLeftSide, field => eye.WidenTarget.ForceLink(field));
-            TryGetFieldAndThen(UnifiedExpressionsBasics.EyeSquint, isLeftSide, field => eye.SqueezeTarget.ForceLink(field)); // This is not a 1:1
-            TryGetFieldAndThen(UnifiedExpressionsBasics.BrowOuterUp, isLeftSide, field => eye.FrownTarget.ForceLink(field));
-            TryGetFieldAndThen(UnifiedExpressionsBasics.EyeLookUp, isLeftSide, field => eye.LookUp.ForceLink(field));
-            TryGetFieldAndThen(UnifiedExpressionsBasics.EyeLookDown, isLeftSide, field => eye.LookDown.ForceLink(field));
+            TryGetFieldAndThen(UnifiedExpressionsConvention.EyeClosed, isLeftSide, field => eye.OpenCloseTarget.ForceLink(field));
+            TryGetFieldAndThen(UnifiedExpressionsConvention.EyeWide, isLeftSide, field => eye.WidenTarget.ForceLink(field));
+            TryGetFieldAndThen(UnifiedExpressionsConvention.EyeSquint, isLeftSide, field => eye.SqueezeTarget.ForceLink(field)); // This is not a 1:1
+            TryGetFieldAndThen(UnifiedExpressionsConvention.BrowOuterUp, isLeftSide, field => eye.FrownTarget.ForceLink(field));
+            TryGetFieldAndThen(UnifiedExpressionsConvention.EyeLookUp, isLeftSide, field => eye.LookUp.ForceLink(field));
+            TryGetFieldAndThen(UnifiedExpressionsConvention.EyeLookDown, isLeftSide, field => eye.LookDown.ForceLink(field));
             // TODO: LookLeft need to be bound to EyeLookOutLeft and EyeLookInRight 
             // TODO: LookRight need to be bound to EyeLookInLeft and EyeLookOutRight
         }
@@ -134,30 +137,30 @@ public class AvatarExpressionFilter(TranslateContext ctx)
         return new List<Binding>
         {
             // Eyebrow Drivers
-            new(AvatarExpression.FrownLeft, UnifiedExpressionsBasics.BrowDown.Left),
-            new(AvatarExpression.FrownLeft, UnifiedExpressionsBasics.BrowInnerUp.Left),
-            new(AvatarExpression.FrownRight, UnifiedExpressionsBasics.BrowDown.Right),
-            new(AvatarExpression.FrownRight, UnifiedExpressionsBasics.BrowInnerUp.Right),
+            new(AvatarExpression.FrownLeft, UnifiedExpressionsConvention.BrowDown.Left),
+            new(AvatarExpression.FrownLeft, UnifiedExpressionsConvention.BrowInnerUp.Left),
+            new(AvatarExpression.FrownRight, UnifiedExpressionsConvention.BrowDown.Right),
+            new(AvatarExpression.FrownRight, UnifiedExpressionsConvention.BrowInnerUp.Right),
 
             // Mouth Drivers
             new(AvatarExpression.Smile, Ignore),
-            new(AvatarExpression.SmileLeft, UnifiedExpressionsBasics.MouthSmile.Left),
-            new(AvatarExpression.SmileRight, UnifiedExpressionsBasics.MouthSmile.Right),
-            new(AvatarExpression.SmirkLeft, UnifiedExpressionsBasics.Mouth.Left),
-            new(AvatarExpression.SmirkRight, UnifiedExpressionsBasics.Mouth.Right),
+            new(AvatarExpression.SmileLeft, UnifiedExpressionsConvention.MouthSmile.Left),
+            new(AvatarExpression.SmileRight, UnifiedExpressionsConvention.MouthSmile.Right),
+            new(AvatarExpression.SmirkLeft, UnifiedExpressionsConvention.Mouth.Left),
+            new(AvatarExpression.SmirkRight, UnifiedExpressionsConvention.Mouth.Right),
             new(AvatarExpression.Frown, Ignore),
-            new(AvatarExpression.FrownLeft, UnifiedExpressionsBasics.MouthFrown.Left),
-            new(AvatarExpression.FrownRight, UnifiedExpressionsBasics.MouthFrown.Right),
+            new(AvatarExpression.FrownLeft, UnifiedExpressionsConvention.MouthFrown.Left),
+            new(AvatarExpression.FrownRight, UnifiedExpressionsConvention.MouthFrown.Right),
             new(AvatarExpression.MouthDimple, Ignore),
-            new(AvatarExpression.MouthDimpleLeft, UnifiedExpressionsBasics.MouthDimple.Left),
-            new(AvatarExpression.MouthDimpleRight, UnifiedExpressionsBasics.MouthDimple.Right),
-            new(AvatarExpression.TongueOut, UnifiedExpressionsBasics.TongueOut.Center),
+            new(AvatarExpression.MouthDimpleLeft, UnifiedExpressionsConvention.MouthDimple.Left),
+            new(AvatarExpression.MouthDimpleRight, UnifiedExpressionsConvention.MouthDimple.Right),
+            new(AvatarExpression.TongueOut, UnifiedExpressionsConvention.TongueOut.Center),
             new(AvatarExpression.TongueRaise, Ignore),
             new(AvatarExpression.TongueExtend, Ignore),
-            new(AvatarExpression.TongueLeft, UnifiedExpressionsBasics.TongueLeft.Center),
-            new(AvatarExpression.TongueRight, UnifiedExpressionsBasics.TongueRight.Center),
-            new(AvatarExpression.TongueDown, UnifiedExpressionsBasics.TongueDown.Center),
-            new(AvatarExpression.TongueUp, UnifiedExpressionsBasics.TongueUp.Center),
+            new(AvatarExpression.TongueLeft, UnifiedExpressionsConvention.TongueLeft.Center),
+            new(AvatarExpression.TongueRight, UnifiedExpressionsConvention.TongueRight.Center),
+            new(AvatarExpression.TongueDown, UnifiedExpressionsConvention.TongueDown.Center),
+            new(AvatarExpression.TongueUp, UnifiedExpressionsConvention.TongueUp.Center),
 
             new(AvatarExpression.TongueRoll, Unavailable),
             new(AvatarExpression.TongueHorizontal, Unavailable),
@@ -171,27 +174,27 @@ public class AvatarExpressionFilter(TranslateContext ctx)
             new(AvatarExpression.SmileClosedLeft, Todo), // TODO: What is this?
             new(AvatarExpression.SmileClosedRight, Todo), // TODO: What is this?
             new(AvatarExpression.Grin, Ignore),
-            new(AvatarExpression.GrinLeft, UnifiedExpressionsBasics.LipPucker.Left),
-            new(AvatarExpression.GrinRight, UnifiedExpressionsBasics.LipPucker.Right),
+            new(AvatarExpression.GrinLeft, UnifiedExpressionsConvention.LipPucker.Left),
+            new(AvatarExpression.GrinRight, UnifiedExpressionsConvention.LipPucker.Right),
             new(AvatarExpression.Angry, Todo),
-            new(AvatarExpression.CheekPuffLeft, UnifiedExpressionsBasics.CheekPuff.Left),
-            new(AvatarExpression.CheekPuffRight, UnifiedExpressionsBasics.CheekPuff.Right),
+            new(AvatarExpression.CheekPuffLeft, UnifiedExpressionsConvention.CheekPuff.Left),
+            new(AvatarExpression.CheekPuffRight, UnifiedExpressionsConvention.CheekPuff.Right),
             new(AvatarExpression.CheekPuff, Ignore),
-            new(AvatarExpression.CheekSuckLeft, UnifiedExpressionsBasics.CheekSuck.Left),
-            new(AvatarExpression.CheekSuckRight, UnifiedExpressionsBasics.CheekSuck.Right),
+            new(AvatarExpression.CheekSuckLeft, UnifiedExpressionsConvention.CheekSuck.Left),
+            new(AvatarExpression.CheekSuckRight, UnifiedExpressionsConvention.CheekSuck.Right),
             new(AvatarExpression.CheekSuck, Ignore),
-            new(AvatarExpression.CheekRaiseLeft, UnifiedExpressionsBasics.CheekSquint.Left),
-            new(AvatarExpression.CheekRaiseRight, UnifiedExpressionsBasics.CheekSquint.Right),
+            new(AvatarExpression.CheekRaiseLeft, UnifiedExpressionsConvention.CheekSquint.Left),
+            new(AvatarExpression.CheekRaiseRight, UnifiedExpressionsConvention.CheekSquint.Right),
             new(AvatarExpression.CheekRaise, Ignore),
-            new(AvatarExpression.LipRaiseUpperLeft, UnifiedExpressionsBasics.MouthRaiserUpper.Left),
-            new(AvatarExpression.LipRaiseUpperRight, UnifiedExpressionsBasics.MouthRaiserUpper.Right),
-            new(AvatarExpression.LipRaiseLowerLeft, UnifiedExpressionsBasics.MouthRaiserLower.Left),
-            new(AvatarExpression.LipRaiseLowerRight, UnifiedExpressionsBasics.MouthRaiserLower.Right),
+            new(AvatarExpression.LipRaiseUpperLeft, UnifiedExpressionsConvention.MouthRaiserUpper.Left),
+            new(AvatarExpression.LipRaiseUpperRight, UnifiedExpressionsConvention.MouthRaiserUpper.Right),
+            new(AvatarExpression.LipRaiseLowerLeft, UnifiedExpressionsConvention.MouthRaiserLower.Left),
+            new(AvatarExpression.LipRaiseLowerRight, UnifiedExpressionsConvention.MouthRaiserLower.Right),
 
-            new(AvatarExpression.LipRaiseUpper, UnifiedExpressionsBasics.MouthUpper.Left),
-            new(AvatarExpression.LipRaiseUpper, UnifiedExpressionsBasics.MouthUpper.Right),
-            new(AvatarExpression.LipRaiseLower, UnifiedExpressionsBasics.MouthLower.Left),
-            new(AvatarExpression.LipRaiseLower, UnifiedExpressionsBasics.MouthLower.Right),
+            new(AvatarExpression.LipRaiseUpper, UnifiedExpressionsConvention.MouthUpper.Left),
+            new(AvatarExpression.LipRaiseUpper, UnifiedExpressionsConvention.MouthUpper.Right),
+            new(AvatarExpression.LipRaiseLower, UnifiedExpressionsConvention.MouthLower.Left),
+            new(AvatarExpression.LipRaiseLower, UnifiedExpressionsConvention.MouthLower.Right),
 
             new(AvatarExpression.LipMoveLeftUpper, Todo),
             new(AvatarExpression.LipMoveRightUpper, Todo),
@@ -218,33 +221,33 @@ public class AvatarExpressionFilter(TranslateContext ctx)
             new(AvatarExpression.LipUnderlayLowerLeft, Todo),
             new(AvatarExpression.LipUnderlayLowerRight, Todo),
             new(AvatarExpression.LipStretch, Ignore),
-            new(AvatarExpression.LipStretchLeft, UnifiedExpressionsBasics.MouthStretch.Left),
-            new(AvatarExpression.LipStretchRight, UnifiedExpressionsBasics.MouthStretch.Right),
+            new(AvatarExpression.LipStretchLeft, UnifiedExpressionsConvention.MouthStretch.Left),
+            new(AvatarExpression.LipStretchRight, UnifiedExpressionsConvention.MouthStretch.Right),
             new(AvatarExpression.LipTighten, Ignore),
-            new(AvatarExpression.LipTightenLeft, UnifiedExpressionsBasics.MouthTightener.Left),
-            new(AvatarExpression.LipTightenRight, UnifiedExpressionsBasics.MouthTightener.Right),
+            new(AvatarExpression.LipTightenLeft, UnifiedExpressionsConvention.MouthTightener.Left),
+            new(AvatarExpression.LipTightenRight, UnifiedExpressionsConvention.MouthTightener.Right),
             new(AvatarExpression.LipsPress, Ignore),
-            new(AvatarExpression.LipsPressLeft, UnifiedExpressionsBasics.MouthPress.Left),
-            new(AvatarExpression.LipsPressRight, UnifiedExpressionsBasics.MouthPress.Right),
-            new(AvatarExpression.JawLeft, UnifiedExpressionsBasics.Jaw.Left),
-            new(AvatarExpression.JawRight, UnifiedExpressionsBasics.Jaw.Right),
+            new(AvatarExpression.LipsPressLeft, UnifiedExpressionsConvention.MouthPress.Left),
+            new(AvatarExpression.LipsPressRight, UnifiedExpressionsConvention.MouthPress.Right),
+            new(AvatarExpression.JawLeft, UnifiedExpressionsConvention.Jaw.Left),
+            new(AvatarExpression.JawRight, UnifiedExpressionsConvention.Jaw.Right),
             new(AvatarExpression.JawHorizontal, Todo),
-            new(AvatarExpression.JawForward, UnifiedExpressionsBasics.JawForward.Center),
+            new(AvatarExpression.JawForward, UnifiedExpressionsConvention.JawForward.Center),
 
             // list.Add(new BS(AvatarExpression.JawDown, UnifiedExpressionsBasics.MouthClosed.Center); // TODO: This is incorrect, it may be a compound blendshape)
             new(AvatarExpression.JawDown, Todo),
 
-            new(AvatarExpression.JawOpen, UnifiedExpressionsBasics.JawOpen.Center),
+            new(AvatarExpression.JawOpen, UnifiedExpressionsConvention.JawOpen.Center),
             new(AvatarExpression.Pout, Ignore),
 
-            new(AvatarExpression.PoutLeft, UnifiedExpressionsBasics.LipFunnelUpper.Left),
-            new(AvatarExpression.PoutLeft, UnifiedExpressionsBasics.LipFunnelLower.Left),
-            new(AvatarExpression.PoutRight, UnifiedExpressionsBasics.LipFunnelUpper.Right),
-            new(AvatarExpression.PoutRight, UnifiedExpressionsBasics.LipFunnelLower.Right),
+            new(AvatarExpression.PoutLeft, UnifiedExpressionsConvention.LipFunnelUpper.Left),
+            new(AvatarExpression.PoutLeft, UnifiedExpressionsConvention.LipFunnelLower.Left),
+            new(AvatarExpression.PoutRight, UnifiedExpressionsConvention.LipFunnelUpper.Right),
+            new(AvatarExpression.PoutRight, UnifiedExpressionsConvention.LipFunnelLower.Right),
 
             new(AvatarExpression.NoseWrinkle, Todo),
-            new(AvatarExpression.NoseWrinkleLeft, UnifiedExpressionsBasics.NoseSneer.Left),
-            new(AvatarExpression.NoseWrinkleRight, UnifiedExpressionsBasics.NoseSneer.Right),
+            new(AvatarExpression.NoseWrinkleLeft, UnifiedExpressionsConvention.NoseSneer.Left),
+            new(AvatarExpression.NoseWrinkleRight, UnifiedExpressionsConvention.NoseSneer.Right),
             new(AvatarExpression.ChinRaise, Todo),
             new(AvatarExpression.ChinRaiseBottom, Todo),
             new(AvatarExpression.ChinRaiseTop, Todo),
@@ -277,69 +280,65 @@ public class AvatarExpressionFilter(TranslateContext ctx)
     // - https://docs.vrcft.io/docs/tutorial-avatars/tutorial-avatars-extras/unified-blendshapes
     //
     // Some metadata may be incorrect, refer to the source on that link.
-    internal static class UnifiedExpressionsBasics
+    private static class UnifiedExpressionsConvention
     {
-        public static readonly ConventionElement EyeLookUp = new(nameof(EyeLookUp), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement EyeLookDown = new(nameof(EyeLookDown), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement EyeLookIn = new(nameof(EyeLookIn), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement EyeLookOut = new(nameof(EyeLookOut), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement EyeClosed = new(nameof(EyeClosed), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement EyeSquint = new(nameof(EyeSquint), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement EyeWide = new(nameof(EyeWide), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement EyeDilation = new(nameof(EyeDilation), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement EyeConstrict = new(nameof(EyeConstrict), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement BrowDown = new(nameof(BrowDown), ConventionElementKind.CenteredAndSided, true);
-        public static readonly ConventionElement BrowInnerUp = new(nameof(BrowInnerUp), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement BrowOuterUp = new(nameof(BrowOuterUp), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement NoseSneer = new(nameof(NoseSneer), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement CheekSquint = new(nameof(CheekSquint), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement CheekPuff = new(nameof(CheekPuff), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement CheekSuck = new(nameof(CheekSuck), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement JawOpen = new(nameof(JawOpen), ConventionElementKind.Centered);
-        public static readonly ConventionElement MouthClosed = new(nameof(MouthClosed), ConventionElementKind.Centered);
-        public static readonly ConventionElement Jaw = new(nameof(Jaw), ConventionElementKind.Sided);
-        public static readonly ConventionElement JawForward = new(nameof(JawForward), ConventionElementKind.Centered);
-        public static readonly ConventionElement LipSuckUpper = new(nameof(LipSuckUpper), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement LipSuckLower = new(nameof(LipSuckLower), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement LipFunnel = new(nameof(LipFunnel), ConventionElementKind.Centered);
-        public static readonly ConventionElement LipFunnelUpper = new(nameof(LipFunnelUpper), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement LipFunnelLower = new(nameof(LipFunnelLower), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement LipPucker = new(nameof(LipPucker), ConventionElementKind.CenteredAndSided, true);
-        public static readonly ConventionElement MouthUpperUp = new(nameof(MouthUpperUp), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement MouthLowerDown = new(nameof(MouthLowerDown), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement Mouth = new(nameof(Mouth), ConventionElementKind.Sided, true);
-        public static readonly ConventionElement MouthUpper = new(nameof(MouthUpper), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement MouthLower = new(nameof(MouthLower), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement MouthFrown = new(nameof(MouthFrown), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement MouthSmile = new(nameof(MouthSmile), ConventionElementKind.CenteredAndSided, true);
-        public static readonly ConventionElement MouthStretch = new(nameof(MouthStretch), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement MouthDimple = new(nameof(MouthDimple), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement MouthRaiserUpper = new(nameof(MouthRaiserUpper), ConventionElementKind.Centered);
-        public static readonly ConventionElement MouthRaiserLower = new(nameof(MouthRaiserLower), ConventionElementKind.Centered);
-        public static readonly ConventionElement MouthPress = new(nameof(MouthPress), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement MouthTightener = new(nameof(MouthTightener), ConventionElementKind.CenteredAndSided);
-        public static readonly ConventionElement TongueOut = new(nameof(TongueOut), ConventionElementKind.Centered);
-        public static readonly ConventionElement TongueUp = new(nameof(TongueUp), ConventionElementKind.Centered);
-        public static readonly ConventionElement TongueDown = new(nameof(TongueDown), ConventionElementKind.Centered);
-        public static readonly ConventionElement TongueLeft = new(nameof(TongueLeft), ConventionElementKind.Centered);
-        public static readonly ConventionElement TongueRight = new(nameof(TongueRight), ConventionElementKind.Centered);
+        public static readonly ConventionElement EyeLookUp = new(nameof(EyeLookUp), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement EyeLookDown = new(nameof(EyeLookDown), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement EyeLookIn = new(nameof(EyeLookIn), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement EyeLookOut = new(nameof(EyeLookOut), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement EyeClosed = new(nameof(EyeClosed), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement EyeSquint = new(nameof(EyeSquint), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement EyeWide = new(nameof(EyeWide), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement EyeDilation = new(nameof(EyeDilation), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement EyeConstrict = new(nameof(EyeConstrict), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement BrowDown = new(nameof(BrowDown), ConventionKind.CombinedAndSided, true);
+        public static readonly ConventionElement BrowInnerUp = new(nameof(BrowInnerUp), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement BrowOuterUp = new(nameof(BrowOuterUp), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement NoseSneer = new(nameof(NoseSneer), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement CheekSquint = new(nameof(CheekSquint), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement CheekPuff = new(nameof(CheekPuff), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement CheekSuck = new(nameof(CheekSuck), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement JawOpen = new(nameof(JawOpen), ConventionKind.Dedicated);
+        public static readonly ConventionElement MouthClosed = new(nameof(MouthClosed), ConventionKind.Dedicated);
+        public static readonly ConventionElement Jaw = new(nameof(Jaw), ConventionKind.Sided);
+        public static readonly ConventionElement JawForward = new(nameof(JawForward), ConventionKind.Dedicated);
+        public static readonly ConventionElement LipSuckUpper = new(nameof(LipSuckUpper), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement LipSuckLower = new(nameof(LipSuckLower), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement LipFunnel = new(nameof(LipFunnel), ConventionKind.Dedicated);
+        public static readonly ConventionElement LipFunnelUpper = new(nameof(LipFunnelUpper), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement LipFunnelLower = new(nameof(LipFunnelLower), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement LipPucker = new(nameof(LipPucker), ConventionKind.CombinedAndSided, true);
+        public static readonly ConventionElement MouthUpperUp = new(nameof(MouthUpperUp), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement MouthLowerDown = new(nameof(MouthLowerDown), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement Mouth = new(nameof(Mouth), ConventionKind.Sided, true);
+        public static readonly ConventionElement MouthUpper = new(nameof(MouthUpper), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement MouthLower = new(nameof(MouthLower), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement MouthFrown = new(nameof(MouthFrown), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement MouthSmile = new(nameof(MouthSmile), ConventionKind.CombinedAndSided, true);
+        public static readonly ConventionElement MouthStretch = new(nameof(MouthStretch), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement MouthDimple = new(nameof(MouthDimple), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement MouthRaiserUpper = new(nameof(MouthRaiserUpper), ConventionKind.Dedicated);
+        public static readonly ConventionElement MouthRaiserLower = new(nameof(MouthRaiserLower), ConventionKind.Dedicated);
+        public static readonly ConventionElement MouthPress = new(nameof(MouthPress), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement MouthTightener = new(nameof(MouthTightener), ConventionKind.CombinedAndSided);
+        public static readonly ConventionElement TongueOut = new(nameof(TongueOut), ConventionKind.Dedicated);
+        public static readonly ConventionElement TongueUp = new(nameof(TongueUp), ConventionKind.Dedicated);
+        public static readonly ConventionElement TongueDown = new(nameof(TongueDown), ConventionKind.Dedicated);
+        public static readonly ConventionElement TongueLeft = new(nameof(TongueLeft), ConventionKind.Dedicated);
+        public static readonly ConventionElement TongueRight = new(nameof(TongueRight), ConventionKind.Dedicated);
     }
 
-    internal class ConventionElement(string prefix, ConventionElementKind kind, bool isBlended = false)
+    private class ConventionElement(string prefix, ConventionKind kind, bool isBlended = false)
     {
         public string Left => $"{prefix}Left";
         public string Right => $"{prefix}Right";
         public string Center => prefix;
     }
 
-    internal enum ConventionElementKind
+    private enum ConventionKind
     {
-        CenteredAndSided,
-        Centered,
+        CombinedAndSided,
+        Dedicated,
         Sided,
     }
-
-    public static readonly string Ignore = nameof(Ignore);
-    public static readonly string Todo = nameof(Todo);
-    public static readonly string Unavailable = nameof(Unavailable);
 }
