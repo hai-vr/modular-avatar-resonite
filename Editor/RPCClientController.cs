@@ -30,7 +30,8 @@ namespace nadena.dev.ndmf.platform.resonite
         private static bool _isDebugBackend;
 
         private static CancellationTokenSource _logStreamCancellationToken = new();
-        internal const string RESOPUPPET_DIR = "Packages/nadena.dev.modular-avatar.resonite/ResoPuppet~";
+        // FIXME: This needs to be ignored in the commit mate
+        internal const string RESOPUPPET_DIR = "C:\\codebase-2025\\hai-devuser-2025\\modular-avatar-resonite\\Resonite~\\ResoniteHook\\Launcher\\bin\\";
 
         private static ResoPuppeteer.ResoPuppeteerClient OpenChannel(string pipeName)
         {

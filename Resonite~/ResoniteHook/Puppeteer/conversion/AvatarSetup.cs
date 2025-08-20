@@ -172,6 +172,8 @@ public partial class RootConverter
         Defer(PHASE_POSTPROCESS, "Add pose node references", () => new AvatarPoseNodeRefFilter(_context).Apply());
         Defer(PHASE_POSTPROCESS, "Add misc references", () => new MiscRefFilter(_context).Apply());
         Defer(PHASE_POSTPROCESS, "Add first person visible filter", () => new FirstPersonVisibleFilter(_context).Apply());
+        Defer(PHASE_POSTPROCESS, "Add avatar expression driver", () => new AvatarExpressionFilter(_context).ApplyAvatarExpressionDriver(slot, spec));
+        Defer(PHASE_POSTPROCESS, "Modify eye linear driver", () => new AvatarExpressionFilter(_context).ApplyEyeLinearDriver(slot, spec));
         Defer(PHASE_POSTPROCESS, "VRIK fixups", () => new VRIKFixupsFilter(_context).Apply());
         Defer(PHASE_RESOLVE_REFERENCES, "Adding bone annotations", () => new BoneAnnotationsFilter(_context).Apply(spec));
 
