@@ -45,30 +45,18 @@ public class AvatarExpressionFilter(TranslateContext ctx)
             right.Side.Value = EyeSide.Right;
         }
         
+        var maker = new DriverMaker(blendshapeIndices, targetMesh, null, linearDriver);
         foreach (var eye in linearDriver.Eyes)
         {
             var isLeftSide = eye.Side.Value == EyeSide.Left;
-            TryGetFieldAndThen(UnifiedExpressionsConvention.EyeClosed, isLeftSide, field => eye.OpenCloseTarget.ForceLink(field));
-            TryGetFieldAndThen(UnifiedExpressionsConvention.EyeWide, isLeftSide, field => eye.WidenTarget.ForceLink(field));
-            TryGetFieldAndThen(UnifiedExpressionsConvention.EyeSquint, isLeftSide, field => eye.SqueezeTarget.ForceLink(field)); // This is not a 1:1
-            TryGetFieldAndThen(UnifiedExpressionsConvention.BrowOuterUp, isLeftSide, field => eye.FrownTarget.ForceLink(field));
-            TryGetFieldAndThen(UnifiedExpressionsConvention.EyeLookUp, isLeftSide, field => eye.LookUp.ForceLink(field));
-            TryGetFieldAndThen(UnifiedExpressionsConvention.EyeLookDown, isLeftSide, field => eye.LookDown.ForceLink(field));
-            // TODO: LookLeft need to be bound to EyeLookOutLeft and EyeLookInRight 
-            // TODO: LookRight need to be bound to EyeLookInLeft and EyeLookOutRight
-        }
-        
-        void TryGetFieldAndThen(ConventionElement element, bool isLeftSide, Action<Sync<float>> callbackFn)
-        {
-            var shapeName = isLeftSide ? element.Left : element.Right;
-            
-            if (shapeName is nameof(Ignore) or nameof(Todo) or nameof(Unavailable)) return;
-
-            if (!blendshapeIndices.TryGetValue(shapeName, out var index)) return;
-            if (targetMesh.BlendShapeWeights.Count <= index) return;
-
-            var destinationField = targetMesh.BlendShapeWeights.GetElement(index);
-            callbackFn(destinationField);
+            maker.TryBind(UnifiedExpressionsConvention.EyeClosed, isLeftSide, eye.OpenCloseTarget);
+            maker.TryBind(UnifiedExpressionsConvention.EyeWide, isLeftSide, eye.WidenTarget);
+            maker.TryBind(UnifiedExpressionsConvention.EyeSquint, isLeftSide, eye.SqueezeTarget); // This is not a 1:1
+            maker.TryBind(UnifiedExpressionsConvention.BrowOuterUp, isLeftSide, eye.FrownTarget);
+            maker.TryBind(UnifiedExpressionsConvention.EyeLookUp, isLeftSide, eye.LookUp);
+            maker.TryBind(UnifiedExpressionsConvention.EyeLookDown, isLeftSide, eye.LookDown);
+            maker.TryBind(isLeftSide ? UnifiedExpressionsConvention.EyeLookOut.Left : UnifiedExpressionsConvention.EyeLookIn.Right, eye.LookLeft);
+            maker.TryBind(isLeftSide ? UnifiedExpressionsConvention.EyeLookIn.Left : UnifiedExpressionsConvention.EyeLookOut.Right, eye.LookRight);
         }
     }
     
@@ -101,14 +89,14 @@ public class AvatarExpressionFilter(TranslateContext ctx)
         
         var driver = targetMesh.Slot.AttachComponent<AvatarExpressionDriver>();
 
-        var maker = new DriverMaker(blendshapeIndices, targetMesh, driver);
+        var maker = new DriverMaker(blendshapeIndices, targetMesh, driver, null);
         foreach (var association in associations)
         {
             maker.TryCreateExpressionDriverFor(association.Expression, association.BlendShape);
         }
     }
 
-    private class DriverMaker(Dictionary<string, int> blendshapeIndices, SkinnedMeshRenderer targetMesh, AvatarExpressionDriver driver)
+    private class DriverMaker(Dictionary<string, int> blendshapeIndices, SkinnedMeshRenderer targetMesh, AvatarExpressionDriver avatarExpressionDriver, EyeLinearDriver eyeLinearDriver)
     {
         internal bool TryCreateExpressionDriverFor(AvatarExpression expression, string shapeName)
         {
@@ -124,7 +112,7 @@ public class AvatarExpressionFilter(TranslateContext ctx)
             
             var destinationField = targetMesh.BlendShapeWeights.GetElement(index);
             
-            var expressionDriver = driver.ExpressionDrivers.Add();
+            var expressionDriver = avatarExpressionDriver.ExpressionDrivers.Add();
             expressionDriver.Target.ForceLink(destinationField);
             expressionDriver.Expression.Value = expression;
             expressionDriver.Min.Value = 0f;
@@ -133,6 +121,30 @@ public class AvatarExpressionFilter(TranslateContext ctx)
             
             callbackFn(expressionDriver);
             return true;
+        }
+
+        internal void TryBind(ConventionElement element, bool isLeftSide, FieldDrive<float> target)
+        {
+            var shapeName = isLeftSide ? element.Left : element.Right;
+            
+            if (shapeName is nameof(Ignore) or nameof(Todo) or nameof(Unavailable)) return;
+
+            if (!blendshapeIndices.TryGetValue(shapeName, out var index)) return;
+            if (targetMesh.BlendShapeWeights.Count <= index) return;
+
+            var destinationField = targetMesh.BlendShapeWeights.GetElement(index);
+            target.ForceLink(destinationField);
+        }
+
+        internal void TryBind(string shapeName, FieldDrive<float> target)
+        {
+            if (shapeName is nameof(Ignore) or nameof(Todo) or nameof(Unavailable)) return;
+
+            if (!blendshapeIndices.TryGetValue(shapeName, out var index)) return;
+            if (targetMesh.BlendShapeWeights.Count <= index) return;
+
+            var destinationField = targetMesh.BlendShapeWeights.GetElement(index);
+            target.ForceLink(destinationField);
         }
     }
 
