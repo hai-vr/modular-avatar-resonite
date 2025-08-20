@@ -49,14 +49,56 @@ public class AvatarExpressionFilter(TranslateContext ctx)
         foreach (var eye in linearDriver.Eyes)
         {
             var isLeftSide = eye.Side.Value == EyeSide.Left;
-            maker.TryBind(UnifiedExpressionsConvention.EyeClosed, isLeftSide, eye.OpenCloseTarget);
-            maker.TryBind(UnifiedExpressionsConvention.EyeWide, isLeftSide, eye.WidenTarget);
-            maker.TryBind(UnifiedExpressionsConvention.EyeSquint, isLeftSide, eye.SqueezeTarget); // This is not a 1:1
-            maker.TryBind(UnifiedExpressionsConvention.BrowOuterUp, isLeftSide, eye.FrownTarget);
-            maker.TryBind(UnifiedExpressionsConvention.EyeLookUp, isLeftSide, eye.LookUp);
-            maker.TryBind(UnifiedExpressionsConvention.EyeLookDown, isLeftSide, eye.LookDown);
-            maker.TryBind(isLeftSide ? UnifiedExpressionsConvention.EyeLookOut.Left : UnifiedExpressionsConvention.EyeLookIn.Right, eye.LookLeft);
-            maker.TryBind(isLeftSide ? UnifiedExpressionsConvention.EyeLookIn.Left : UnifiedExpressionsConvention.EyeLookOut.Right, eye.LookRight);
+            if (isProbablyUnifiedExpressions)
+            {
+                // @@ LookLeft
+                // @@ LookUp
+                // @@ LookRight
+                // @@ LookDown
+                maker.TryBind(UnifiedExpressionsConvention.EyeLookUp, isLeftSide, eye.LookUp);
+                maker.TryBind(UnifiedExpressionsConvention.EyeLookDown, isLeftSide, eye.LookDown);
+                maker.TryBind(isLeftSide ? UnifiedExpressionsConvention.EyeLookOut.Left : UnifiedExpressionsConvention.EyeLookIn.Right, eye.LookLeft);
+                maker.TryBind(isLeftSide ? UnifiedExpressionsConvention.EyeLookIn.Left : UnifiedExpressionsConvention.EyeLookOut.Right, eye.LookRight);
+                
+                // @@ OpenCloseTarget
+                maker.TryBind(UnifiedExpressionsConvention.EyeClosed, isLeftSide, eye.OpenCloseTarget);
+                // @@ PupilSizeTarget
+                // @@ WidenTarget
+                maker.TryBind(UnifiedExpressionsConvention.EyeWide, isLeftSide, eye.WidenTarget);
+                // @@ SqueezeTarget
+                maker.TryBind(UnifiedExpressionsConvention.EyeSquint, isLeftSide, eye.SqueezeTarget); // This is not a 1:1
+                // @@ FrownTarget
+                maker.TryBind(UnifiedExpressionsConvention.BrowOuterUp, isLeftSide, eye.FrownTarget); // TODO: ???
+                // @@ InnerBrowRaiseTarget
+                // @@ InnerBrowLowerTarget
+                // @@ OuterBrowRaiseTarget
+                // @@ OuterBrowLowerTarget
+            }
+            else
+            {
+                // @@ LookLeft
+                // @@ LookUp
+                // @@ LookRight
+                // @@ LookDown
+                maker.TryBind(isLeftSide ? ARKitConvention.eyeLookUpLeft : ARKitConvention.eyeLookUpRight, eye.LookUp);
+                maker.TryBind(isLeftSide ? ARKitConvention.eyeLookDownLeft : ARKitConvention.eyeLookDownRight, eye.LookDown);
+                maker.TryBind(isLeftSide ? ARKitConvention.eyeLookOutLeft : ARKitConvention.eyeLookInRight, eye.LookLeft);
+                maker.TryBind(isLeftSide ? ARKitConvention.eyeLookInLeft : ARKitConvention.eyeLookOutRight, eye.LookRight);
+                
+                // @@ OpenCloseTarget
+                maker.TryBind(isLeftSide ? ARKitConvention.eyeBlinkLeft : ARKitConvention.eyeBlinkRight, eye.OpenCloseTarget);
+                // @@ PupilSizeTarget
+                // @@ WidenTarget
+                maker.TryBind(isLeftSide ? ARKitConvention.eyeWideLeft : ARKitConvention.eyeWideRight, eye.WidenTarget);
+                // @@ SqueezeTarget
+                maker.TryBind(isLeftSide ? ARKitConvention.eyeSquintLeft : ARKitConvention.eyeSquintRight, eye.SqueezeTarget); // This is not a 1:1
+                // @@ FrownTarget
+                // @@ InnerBrowRaiseTarget
+                // @@ InnerBrowLowerTarget
+                // @@ OuterBrowRaiseTarget
+                // @@ OuterBrowLowerTarget
+                // TODO: Brow and frown
+            }
         }
     }
     
